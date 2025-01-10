@@ -11,6 +11,7 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -58,24 +59,39 @@ public class NeatButton extends Button {
         RenderSystem.defaultBlendFunc();
         RenderSystem.blendFunc(GlStateManager.SourceFactor.ONE_MINUS_DST_COLOR, GlStateManager.DestFactor.ZERO);
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
-        BufferBuilder bufferbuilder = Tesselator.getInstance().getBuilder();
-        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+        BufferBuilder bufferbuilder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
         float color = display ? this.isHovered() ? 1.0f : 0.8f : this.isHovered() ? 0.7f : 0.5f;
         if (!enable.get()) {
             color = 0.2f;
         }
-        bufferbuilder.vertex(this.getX(), this.getY() + height, 0.0D).color(color, color, color, 1.0f).endVertex();
-        bufferbuilder.vertex(this.getX() + width, this.getY() + height, 0.0D).color(color, color, color, 1.0f).endVertex();
-        bufferbuilder.vertex(this.getX() + width, this.getY(), 0.0D).color(color, color, color, 1.0f).endVertex();
-        bufferbuilder.vertex(this.getX(), this.getY(), 0.0D).color(color, color, color, 1.0f).endVertex();
+        bufferbuilder.addVertex((float)this.getX(), (float)(this.getY() + height), 0.0f)
+                .setColor((int)(color * 255), (int)(color * 255), (int)(color * 255), 255);
+
+        bufferbuilder.addVertex((float)(this.getX() + width), (float)(this.getY() + height), 0.0f)
+                .setColor((int)(color * 255), (int)(color * 255), (int)(color * 255), 255);
+
+        bufferbuilder.addVertex((float)(this.getX() + width), (float)this.getY(), 0.0f)
+                .setColor((int)(color * 255), (int)(color * 255), (int)(color * 255), 255);
+
+        bufferbuilder.addVertex((float)this.getX(), (float)this.getY(), 0.0f)
+                .setColor((int)(color * 255), (int)(color * 255), (int)(color * 255), 255);
+
         if (enable.get()) {
             color = 0.7f;
         }
-        bufferbuilder.vertex(this.getX() - 1, this.getY() + height + 1, 0.0D).color(color, color, color, 1.0f).endVertex();
-        bufferbuilder.vertex(this.getX() + width + 1, this.getY() + height + 1, 0.0D).color(color, color, color, 1.0f).endVertex();
-        bufferbuilder.vertex(this.getX() + width + 1, this.getY() - 1, 0.0D).color(color, color, color, 1.0f).endVertex();
-        bufferbuilder.vertex(this.getX() - 1, this.getY() - 1, 0.0D).color(color, color, color, 1.0f).endVertex();
-        BufferUploader.drawWithShader(bufferbuilder.end());
+
+        bufferbuilder.addVertex((float)(this.getX() - 1), (float)(this.getY() + height + 1), 0.0f)
+                .setColor((int)(color * 255), (int)(color * 255), (int)(color * 255), 255);
+
+        bufferbuilder.addVertex((float)(this.getX() + width + 1), (float)(this.getY() + height + 1), 0.0f)
+                .setColor((int)(color * 255), (int)(color * 255), (int)(color * 255), 255);
+
+        bufferbuilder.addVertex((float)(this.getX() + width + 1), (float)(this.getY() - 1), 0.0f)
+                .setColor((int)(color * 255), (int)(color * 255), (int)(color * 255), 255);
+
+        bufferbuilder.addVertex((float)(this.getX() - 1), (float)(this.getY() - 1), 0.0f)
+                .setColor((int)(color * 255), (int)(color * 255), (int)(color * 255), 255);
+        BufferUploader.drawWithShader(Objects.requireNonNull(bufferbuilder.build()));
         guiGraphics.drawCenteredString(font, this.getMessage(), this.getX() + this.width / 2, this.getY() + (this.height - 8) / 2, j | Mth.ceil(this.alpha * 255.0F) << 24);
         guiGraphics.drawCenteredString(font, display ? Component.literal("■") : Component.literal("□"), this.getX() + this.width / 2 - ((this.width - 20) / 2), this.getY() + (this.height - 8) / 2, j | Mth.ceil(this.alpha * 255.0F) << 24);
         RenderSystem.disableBlend();

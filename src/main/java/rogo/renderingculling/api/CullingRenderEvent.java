@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
+import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -19,6 +20,7 @@ import rogo.renderingculling.mixin.AccessorFrustum;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static rogo.renderingculling.gui.ConfigScreen.u;
 import static rogo.renderingculling.gui.ConfigScreen.v;
@@ -36,7 +38,7 @@ public class CullingRenderEvent {
         HudRenderCallback.EVENT.register((matrixStack, tickDelta) -> INSTANCE.onOverlayRender(matrixStack, tickDelta));
     }
 
-    public void onOverlayRender(GuiGraphics guiGraphics, float tickDelta) {
+    public void onOverlayRender(GuiGraphics guiGraphics, DeltaTracker tickDelta) {
         if (Minecraft.getInstance().player == null) {
             return;
         }
@@ -116,40 +118,53 @@ public class CullingRenderEvent {
 
             float bgColor = 1.0f;
             float bgAlpha = 0.3f;
-            BufferBuilder bufferbuilder = Tesselator.getInstance().getBuilder();
-            bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR_TEX);
-            bufferbuilder.vertex(right - 1, bottom + 1, 0.0D)
-                    .color(bgColor, bgColor, bgColor, bgAlpha)
-                    .uv(u(right - 1), v(bottom + 1)).endVertex();
-            bufferbuilder.vertex(left + 1, bottom + 1, 0.0D)
-                    .color(bgColor, bgColor, bgColor, bgAlpha)
-                    .uv(u(left + 1), v(bottom + 1)).endVertex();
-            bufferbuilder.vertex(left + 1, top - 1, 0.0D)
-                    .color(bgColor, bgColor, bgColor, bgAlpha)
-                    .uv(u(left + 1), v(top - 1)).endVertex();
-            bufferbuilder.vertex(right - 1, top - 1, 0.0D)
-                    .color(bgColor, bgColor, bgColor, bgAlpha)
-                    .uv(u(right - 1), v(top - 1)).endVertex();
+            BufferBuilder bufferbuilder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+            bufferbuilder.addVertex((float) (right - 1), (float) (bottom + 1), 0.0F)
+                    .setColor((int)(bgColor * 255), (int)(bgColor * 255), (int)(bgColor * 255), (int)(bgAlpha * 255))
+                    .setUv(u(right - 1), v(bottom + 1));
+
+            bufferbuilder.addVertex((float) (left + 1), (float) (bottom + 1), 0.0F)
+                    .setColor((int)(bgColor * 255), (int)(bgColor * 255), (int)(bgColor * 255), (int)(bgAlpha * 255))
+                    .setUv(u(left + 1), v(bottom + 1));
+
+            bufferbuilder.addVertex((float) (left + 1), (float) (top - 1), 0.0F)
+                    .setColor((int)(bgColor * 255), (int)(bgColor * 255), (int)(bgColor * 255), (int)(bgAlpha * 255))
+                    .setUv(u(left + 1), v(top - 1));
+
+            bufferbuilder.addVertex((float) (right - 1), (float) (top - 1), 0.0F)
+                    .setColor((int)(bgColor * 255), (int)(bgColor * 255), (int)(bgColor * 255), (int)(bgAlpha * 255))
+                    .setUv(u(right - 1), v(top - 1));
             RenderSystem.setShaderTexture(0, Minecraft.getInstance().getMainRenderTarget().getColorTextureId());
             CullingStateManager.useShader(CullingStateManager.REMOVE_COLOR_SHADER);
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 0.1f);
             RenderSystem.disableBlend();
-            RenderSystem.getModelViewStack().pushPose();
+            RenderSystem.getModelViewStack().pushMatrix();
             RenderSystem.getModelViewStack().translate(0, 0, -1);
             RenderSystem.applyModelViewMatrix();
-            BufferUploader.drawWithShader(bufferbuilder.end());
-            RenderSystem.getModelViewStack().popPose();
+            BufferUploader.drawWithShader(Objects.requireNonNull(bufferbuilder.build()));
+            RenderSystem.getModelViewStack().popMatrix();
             RenderSystem.applyModelViewMatrix();
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0f);
             RenderSystem.enableBlend();
             RenderSystem.blendFunc(GlStateManager.SourceFactor.ONE_MINUS_DST_COLOR, GlStateManager.DestFactor.ZERO);
-            bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-            bufferbuilder.vertex(right, bottom, 0.0D).color(1.0F, 1.0F, 1.0F, 1.0F).endVertex();
-            bufferbuilder.vertex(left, bottom, 0.0D).color(1.0F, 1.0F, 1.0F, 1.0F).endVertex();
-            bufferbuilder.vertex(left, top, 0.0D).color(1.0F, 1.0F, 1.0F, 1.0F).endVertex();
-            bufferbuilder.vertex(right, top, 0.0D).color(1.0F, 1.0F, 1.0F, 1.0F).endVertex();
+            int r = (int)(1.0f * 255);
+            int g = (int)(1.0f * 255);
+            int b = (int)(1.0f * 255);
+            int a = (int)(1.0f * 255);
+
+            bufferbuilder.addVertex((float) right, (float) bottom, 0.0F)
+                    .setColor(r, g, b, a);
+
+            bufferbuilder.addVertex((float) left, (float) bottom, 0.0F)
+                    .setColor(r, g, b, a);
+
+            bufferbuilder.addVertex((float) left, (float) top, 0.0F)
+                    .setColor(r, g, b, a);
+
+            bufferbuilder.addVertex((float) right, (float) top, 0.0F)
+                    .setColor(r, g, b, a);
             RenderSystem.setShader(GameRenderer::getPositionColorShader);
-            BufferUploader.drawWithShader(bufferbuilder.end());
+            BufferUploader.drawWithShader(Objects.requireNonNull(bufferbuilder.build()));
             RenderSystem.defaultBlendFunc();
             RenderSystem.disableBlend();
             renderText(guiGraphics, monitorTexts, width, top);
@@ -168,36 +183,74 @@ public class CullingRenderEvent {
                 int scaledHeight = (int) (minecraft.getWindow().getGuiScaledHeight() * windowScale * screenScale);
                 int scaledWidth = (int) (minecraft.getWindow().getGuiScaledWidth() * windowScale * screenScale);
                 int offsetHeight = (int) ((1 - screenScale) * 2 * minecraft.getWindow().getGuiScaledHeight() * windowScale);
-                bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-                bufferbuilder.vertex(0.0D, minecraft.getWindow().getGuiScaledHeight() - offsetHeight, 0.0D).uv(0.0F, 0.0F).color(255, 255, 255, 255).endVertex();
-                bufferbuilder.vertex(scaledWidth, minecraft.getWindow().getGuiScaledHeight() - offsetHeight, 0.0D).uv(1, 0.0F).color(255, 255, 255, 255).endVertex();
-                bufferbuilder.vertex(scaledWidth, minecraft.getWindow().getGuiScaledHeight() - scaledHeight - offsetHeight, 0.0D).uv(1, 1).color(255, 255, 255, 255).endVertex();
-                bufferbuilder.vertex(0.0D, minecraft.getWindow().getGuiScaledHeight() - scaledHeight - offsetHeight, 0.0D).uv(0.0F, 1).color(255, 255, 255, 255).endVertex();
+                bufferbuilder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+
+                bufferbuilder.addVertex(0.0F, (float) (minecraft.getWindow().getGuiScaledHeight() - offsetHeight), 0.0F)
+                        .setUv(0.0F, 0.0F)
+                        .setColor(255, 255, 255, 255);
+
+                bufferbuilder.addVertex((float) scaledWidth, (float) (minecraft.getWindow().getGuiScaledHeight() - offsetHeight), 0.0F)
+                        .setUv(1, 0.0F)
+                        .setColor(255, 255, 255, 255);
+
+                bufferbuilder.addVertex((float) scaledWidth, (float) (minecraft.getWindow().getGuiScaledHeight() - scaledHeight - offsetHeight), 0.0F)
+                        .setUv(1, 1)
+                        .setColor(255, 255, 255, 255);
+
+                bufferbuilder.addVertex(0.0F, (float) (minecraft.getWindow().getGuiScaledHeight() - scaledHeight - offsetHeight), 0.0F)
+                        .setUv(0.0F, 1)
+                        .setColor(255, 255, 255, 255);
                 RenderSystem.setShaderTexture(0, CullingStateManager.DEPTH_TEXTURE[i]);
-                tessellator.end();
+                BufferUploader.drawWithShader(Objects.requireNonNull(bufferbuilder.build()));
                 screenScale *= 0.5f;
             }
 
             if (Config.doEntityCulling()) {
                 height = (int) (minecraft.getWindow().getGuiScaledHeight() * 0.25f);
-                bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-                bufferbuilder.vertex(minecraft.getWindow().getGuiScaledWidth() - height, height, 0.0D).uv(0.0F, 0.0F).color(255, 255, 255, 255).endVertex();
-                bufferbuilder.vertex((double) minecraft.getWindow().getGuiScaledWidth(), height, 0.0D).uv(1, 0.0F).color(255, 255, 255, 255).endVertex();
-                bufferbuilder.vertex((double) minecraft.getWindow().getGuiScaledWidth(), 0, 0.0D).uv(1, 1).color(255, 255, 255, 255).endVertex();
-                bufferbuilder.vertex(minecraft.getWindow().getGuiScaledWidth() - height, 0, 0.0D).uv(0.0F, 1).color(255, 255, 255, 255).endVertex();
+                bufferbuilder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+
+                bufferbuilder.addVertex((float)(minecraft.getWindow().getGuiScaledWidth() - height), (float)height, 0.0f)
+                        .setUv(0.0f, 0.0f)
+                        .setColor(255, 255, 255, 255);
+
+                bufferbuilder.addVertex((float)minecraft.getWindow().getGuiScaledWidth(), (float)height, 0.0f)
+                        .setUv(1.0f, 0.0f)
+                        .setColor(255, 255, 255, 255);
+
+                bufferbuilder.addVertex((float)minecraft.getWindow().getGuiScaledWidth(), 0.0f, 0.0f)
+                        .setUv(1.0f, 1.0f)
+                        .setColor(255, 255, 255, 255);
+
+                bufferbuilder.addVertex((float)(minecraft.getWindow().getGuiScaledWidth() - height), 0.0f, 0.0f)
+                        .setUv(0.0f, 1.0f)
+                        .setColor(255, 255, 255, 255);
+
                 RenderSystem.setShaderTexture(0, CullingStateManager.ENTITY_CULLING_MAP_TARGET.getColorTextureId());
-                tessellator.end();
+                BufferUploader.drawWithShader(bufferbuilder.build());
             }
 
             if (Config.getCullChunk()) {
                 height = (int) (minecraft.getWindow().getGuiScaledHeight() * 0.25f);
-                bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-                bufferbuilder.vertex(minecraft.getWindow().getGuiScaledWidth() - height, height * 2, 0.0D).uv(0.0F, 0.0F).color(255, 255, 255, 255).endVertex();
-                bufferbuilder.vertex((double) minecraft.getWindow().getGuiScaledWidth(), height * 2, 0.0D).uv(1, 0.0F).color(255, 255, 255, 255).endVertex();
-                bufferbuilder.vertex((double) minecraft.getWindow().getGuiScaledWidth(), height, 0.0D).uv(1, 1).color(255, 255, 255, 255).endVertex();
-                bufferbuilder.vertex(minecraft.getWindow().getGuiScaledWidth() - height, height, 0.0D).uv(0.0F, 1).color(255, 255, 255, 255).endVertex();
+                bufferbuilder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+
+                bufferbuilder.addVertex((float)(minecraft.getWindow().getGuiScaledWidth() - height), (float)(height * 2), 0.0f)
+                        .setUv(0.0f, 0.0f)
+                        .setColor(255, 255, 255, 255);
+
+                bufferbuilder.addVertex((float)minecraft.getWindow().getGuiScaledWidth(), (float)(height * 2), 0.0f)
+                        .setUv(1.0f, 0.0f)
+                        .setColor(255, 255, 255, 255);
+
+                bufferbuilder.addVertex((float)minecraft.getWindow().getGuiScaledWidth(), (float)height, 0.0f)
+                        .setUv(1.0f, 1.0f)
+                        .setColor(255, 255, 255, 255);
+
+                bufferbuilder.addVertex((float)(minecraft.getWindow().getGuiScaledWidth() - height), (float)height, 0.0f)
+                        .setUv(0.0f, 1.0f)
+                        .setColor(255, 255, 255, 255);
+
                 RenderSystem.setShaderTexture(0, CullingStateManager.CHUNK_CULLING_MAP_TARGET.getColorTextureId());
-                tessellator.end();
+                BufferUploader.drawWithShader(bufferbuilder.build());
             }
             RenderSystem.depthMask(true);
             RenderSystem.disableBlend();
@@ -224,7 +277,7 @@ public class CullingRenderEvent {
             return;
 
         Tesselator tessellator = Tesselator.getInstance();
-        BufferBuilder bufferbuilder = tessellator.getBuilder();
+        BufferBuilder bufferbuilder = tessellator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
 
         CullingStateManager.callDepthTexture();
 
@@ -239,12 +292,11 @@ public class CullingRenderEvent {
             CullingStateManager.useShader(CullingStateManager.CHUNK_CULLING_SHADER);
             CullingStateManager.CHUNK_CULLING_MAP_TARGET.clear(Minecraft.ON_OSX);
             CullingStateManager.CHUNK_CULLING_MAP_TARGET.bindWrite(false);
-            bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
-            bufferbuilder.vertex(-1.0f, -1.0f, 0.0f).endVertex();
-            bufferbuilder.vertex(1.0f, -1.0f, 0.0f).endVertex();
-            bufferbuilder.vertex(1.0f, 1.0f, 0.0f).endVertex();
-            bufferbuilder.vertex(-1.0f, 1.0f, 0.0f).endVertex();
-            tessellator.end();
+            bufferbuilder.addVertex(-1.0f, -1.0f, 0.0f);
+            bufferbuilder.addVertex(1.0f, -1.0f, 0.0f);
+            bufferbuilder.addVertex(1.0f, 1.0f, 0.0f);
+            bufferbuilder.addVertex(-1.0f, 1.0f, 0.0f);
+            BufferUploader.drawWithShader(Objects.requireNonNull(bufferbuilder.build()));
         }
 
         CullingStateManager.bindMainFrameTarget();

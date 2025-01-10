@@ -2,7 +2,7 @@
   "required": true,
   "package": "rogo.renderingculling.mixin",
   "minVersion": "0.8.1",
-  "compatibilityLevel": "JAVA_17",
+  "compatibilityLevel": "JAVA_21",
   "refmap": "BruteForceRenderingCulling-fabric-1.20.4-refmap.json",
   "injectors": {
     "defaultRequire": 1

@@ -518,15 +518,17 @@ public class CullingStateManager {
                 useShader(CullingStateManager.COPY_DEPTH_SHADER);
                 depthContext.frame().clear(Minecraft.ON_OSX);
                 depthContext.frame().bindWrite(false);
-                Tesselator tesselator = Tesselator.getInstance();
-                BufferBuilder bufferbuilder = tesselator.getBuilder();
-                bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
-                bufferbuilder.vertex(-1.0f, -1.0f, 0.0f).endVertex();
-                bufferbuilder.vertex(1.0f, -1.0f, 0.0f).endVertex();
-                bufferbuilder.vertex(1.0f, 1.0f, 0.0f).endVertex();
-                bufferbuilder.vertex(-1.0f, 1.0f, 0.0f).endVertex();
+                ByteBufferBuilder byteBufferBuilder = new ByteBufferBuilder(1024);
+                BufferBuilder bufferBuilder = new BufferBuilder(byteBufferBuilder, VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
+
+                bufferBuilder.addVertex(-1.0f, -1.0f, 0.0f);
+                bufferBuilder.addVertex(1.0f, -1.0f, 0.0f);
+                bufferBuilder.addVertex(1.0f, 1.0f, 0.0f);
+                bufferBuilder.addVertex(-1.0f, 1.0f, 0.0f);
+
                 RenderSystem.setShaderTexture(0, depthContext.lastTexture());
-                tesselator.end();
+                MeshData meshData = bufferBuilder.buildOrThrow();
+                BufferUploader.drawWithShader(meshData);
                 DEPTH_TEXTURE[depthContext.index()] = depthContext.frame().getColorTextureId();
             });
 

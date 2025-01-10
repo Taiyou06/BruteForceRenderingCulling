@@ -20,6 +20,7 @@ import rogo.renderingculling.api.CullingStateManager;
 import rogo.renderingculling.api.ModLoader;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -60,39 +61,52 @@ public class ConfigScreen extends Screen {
         float bgAlpha = 0.3f;
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 0.1f);
         CullingStateManager.useShader(CullingStateManager.REMOVE_COLOR_SHADER);
-        BufferBuilder bufferbuilder = Tesselator.getInstance().getBuilder();
-        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR_TEX);
-        bufferbuilder.vertex(right - 1, bottom + 1, 0.0D)
-                .color(bgColor, bgColor, bgColor, bgAlpha)
-                .uv(u(right - 1), v(bottom + 1)).endVertex();
-        bufferbuilder.vertex(left + 1, bottom + 1, 0.0D)
-                .color(bgColor, bgColor, bgColor, bgAlpha)
-                .uv(u(left + 1), v(bottom + 1)).endVertex();
-        bufferbuilder.vertex(left + 1, top - 1, 0.0D)
-                .color(bgColor, bgColor, bgColor, bgAlpha)
-                .uv(u(left + 1), v(top - 1)).endVertex();
-        bufferbuilder.vertex(right - 1, top - 1, 0.0D)
-                .color(bgColor, bgColor, bgColor, bgAlpha)
-                .uv(u(right - 1), v(top - 1)).endVertex();
+
+        BufferBuilder bufferbuilder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+
+        bufferbuilder.addVertex((float) (right - 1), (float) (bottom + 1), 0.0F)
+                .setColor((int)(bgColor * 255), (int)(bgColor * 255), (int)(bgColor * 255), (int)(bgAlpha * 255))
+                .setUv(u(right - 1), v(bottom + 1));
+
+        bufferbuilder.addVertex((float) (left + 1), (float) (bottom + 1), 0.0F)
+                .setColor((int)(bgColor * 255), (int)(bgColor * 255), (int)(bgColor * 255), (int)(bgAlpha * 255))
+                .setUv(u(left + 1), v(bottom + 1));
+
+        bufferbuilder.addVertex((float) (left + 1), (float) (top - 1), 0.0F)
+                .setColor((int)(bgColor * 255), (int)(bgColor * 255), (int)(bgColor * 255), (int)(bgAlpha * 255))
+                .setUv(u(left + 1), v(top - 1));
+
+        bufferbuilder.addVertex((float) (right - 1), (float) (top - 1), 0.0F)
+                .setColor((int)(bgColor * 255), (int)(bgColor * 255), (int)(bgColor * 255), (int)(bgAlpha * 255))
+                .setUv(u(right - 1), v(top - 1));
+
         RenderSystem.setShaderTexture(0, Minecraft.getInstance().getMainRenderTarget().getColorTextureId());
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
-        BufferUploader.drawWithShader(bufferbuilder.end());
+        BufferUploader.drawWithShader(bufferbuilder.build()); // Use build() instead of end()
 
         bgAlpha = 1.0f;
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
-        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-        bufferbuilder.vertex(right, bottom, 0.0D)
-                .color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
-        bufferbuilder.vertex(left, bottom, 0.0D)
-                .color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
-        bufferbuilder.vertex(left, top, 0.0D)
-                .color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
-        bufferbuilder.vertex(right, top, 0.0D)
-                .color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
+
+        // Use the correct vertex consumer methods for the second quad
+        bufferbuilder.addVertex((float) (right - 1), (float) (bottom + 1), 0.0F)
+                .setColor((int)(bgColor * 255), (int)(bgColor * 255), (int)(bgColor * 255), (int)(bgAlpha * 255))
+                .setUv(u(right - 1), v(bottom + 1));
+
+        bufferbuilder.addVertex((float) (left + 1), (float) (bottom + 1), 0.0F)
+                .setColor((int)(bgColor * 255), (int)(bgColor * 255), (int)(bgColor * 255), (int)(bgAlpha * 255))
+                .setUv(u(left + 1), v(bottom + 1));
+
+        bufferbuilder.addVertex((float) (left + 1), (float) (top - 1), 0.0F)
+                .setColor((int)(bgColor * 255), (int)(bgColor * 255), (int)(bgColor * 255), (int)(bgAlpha * 255))
+                .setUv(u(left + 1), v(top - 1));
+
+        bufferbuilder.addVertex((float) (right - 1), (float) (top - 1), 0.0F)
+                .setColor((int)(bgColor * 255), (int)(bgColor * 255), (int)(bgColor * 255), (int)(bgAlpha * 255))
+                .setUv(u(right - 1), v(top - 1));
 
         RenderSystem.blendFunc(GlStateManager.SourceFactor.ONE_MINUS_DST_COLOR, GlStateManager.DestFactor.ZERO);
-        BufferUploader.drawWithShader(bufferbuilder.end());
+        BufferUploader.drawWithShader(bufferbuilder.build()); // Use build() instead of end()
         RenderSystem.defaultBlendFunc();
         RenderSystem.disableBlend();
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0f);
@@ -261,7 +275,7 @@ public class ConfigScreen extends Screen {
         }
 
         partHeight = 0;
-        RenderSystem.getModelViewStack().pushPose();
+        RenderSystem.getModelViewStack().pushMatrix();
         RenderSystem.getModelViewStack().translate(0, 0, 1);
         RenderSystem.applyModelViewMatrix();
         for (String part : parts) {
@@ -287,21 +301,30 @@ public class ConfigScreen extends Screen {
         float bgAlpha = 0.7f;
 
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
-        BufferBuilder bufferbuilder = Tesselator.getInstance().getBuilder();
-        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-        bufferbuilder.vertex(right, bottom, 0.0D)
-                .color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
-        bufferbuilder.vertex(left, bottom, 0.0D)
-                .color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
-        bufferbuilder.vertex(left, top, 0.0D)
-                .color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
-        bufferbuilder.vertex(right, top, 0.0D)
-                .color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
+        BufferBuilder bufferbuilder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+
+// Convert float colors to bytes (0-255)
+        int r = (int)(bgColor * 255);
+        int g = (int)(bgColor * 255);
+        int b = (int)(bgColor * 255);
+        int a = (int)(bgAlpha * 255);
+
+        bufferbuilder.addVertex((float) right, (float) bottom, 0.0F)
+                .setColor(r, g, b, a);
+
+        bufferbuilder.addVertex((float) left, (float) bottom, 0.0F)
+                .setColor(r, g, b, a);
+
+        bufferbuilder.addVertex((float) left, (float) top, 0.0F)
+                .setColor(r, g, b, a);
+
+        bufferbuilder.addVertex((float) right, (float) top, 0.0F)
+                .setColor(r, g, b, a);
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
-        BufferUploader.drawWithShader(bufferbuilder.end());
+        BufferUploader.drawWithShader(Objects.requireNonNull(bufferbuilder.build()));
         RenderSystem.disableBlend();
-        RenderSystem.getModelViewStack().popPose();
+        RenderSystem.getModelViewStack().popMatrix();
         RenderSystem.applyModelViewMatrix();
     }
 }

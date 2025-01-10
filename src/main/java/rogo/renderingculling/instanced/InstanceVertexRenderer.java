@@ -74,11 +74,11 @@ public class InstanceVertexRenderer implements AutoCloseable {
     }
 
     private void bindVertexArray() {
-        RenderSystem.glBindVertexArray(() -> this.arrayObjectId);
+        RenderSystem.glBindVertexArray(this.arrayObjectId);
     }
 
     public static void unbindVertexArray() {
-        RenderSystem.glBindVertexArray(() -> 0);
+        RenderSystem.glBindVertexArray(0);
     }
 
     public void drawWithShader(ShaderInstance p_166870_) {
@@ -109,9 +109,6 @@ public class InstanceVertexRenderer implements AutoCloseable {
                 p_166879_.PROJECTION_MATRIX.set(RenderSystem.getProjectionMatrix());
             }
 
-            if (p_166879_.INVERSE_VIEW_ROTATION_MATRIX != null) {
-                p_166879_.INVERSE_VIEW_ROTATION_MATRIX.set(RenderSystem.getInverseViewRotationMatrix());
-            }
 
             if (p_166879_.COLOR_MODULATOR != null) {
                 p_166879_.COLOR_MODULATOR.set(RenderSystem.getShaderColor());

@@ -20,6 +20,7 @@ public class NeatSliderButton extends AbstractOptionSliderButton {
     private final Function<NeatSliderButton, Component> name;
     private final Consumer<Double> applyValue;
     private Supplier<Component> detailMessage;
+    ByteBufferBuilder byteBufferBuilder = new ByteBufferBuilder(1024);
 
     protected NeatSliderButton(int p_93380_, int p_93381_, int p_93382_, int p_93383_, Supplier<Double> getter, Function<Double, Double> setter, Function<Double, String> display, Supplier<MutableComponent> name) {
         super(Minecraft.getInstance().options, p_93380_, p_93381_, p_93382_, p_93383_, getter.get());
@@ -56,26 +57,29 @@ public class NeatSliderButton extends AbstractOptionSliderButton {
         RenderSystem.enableBlend();
         RenderSystem.blendFunc(GlStateManager.SourceFactor.ONE_MINUS_DST_COLOR, GlStateManager.DestFactor.ZERO);
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
-        BufferBuilder bufferbuilder = Tesselator.getInstance().getBuilder();
-        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+        ByteBufferBuilder byteBufferBuilder = new ByteBufferBuilder(1024);
+        BufferBuilder bufferBuilder = new BufferBuilder(byteBufferBuilder, VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+
         float color = this.isHovered() ? 1.0f : 0.8f;
-        bufferbuilder.vertex(this.getX(), this.getY() + height, 0.0D).color(color, color, color, 1.0f).endVertex();
-        bufferbuilder.vertex(this.getX() + width, this.getY() + height, 0.0D).color(color, color, color, 1.0f).endVertex();
-        bufferbuilder.vertex(this.getX() + width, this.getY(), 0.0D).color(color, color, color, 1.0f).endVertex();
-        bufferbuilder.vertex(this.getX(), this.getY(), 0.0D).color(color, color, color, 1.0f).endVertex();
+        bufferBuilder.addVertex(this.getX(), this.getY() + height, 0.0f).setColor(color, color, color, 1.0f);
+        bufferBuilder.addVertex(this.getX() + width, this.getY() + height, 0.0f).setColor(color, color, color, 1.0f);
+        bufferBuilder.addVertex(this.getX() + width, this.getY(), 0.0f).setColor(color, color, color, 1.0f);
+        bufferBuilder.addVertex(this.getX(), this.getY(), 0.0f).setColor(color, color, color, 1.0f);
 
         color = 0.7f;
-        bufferbuilder.vertex(this.getX() - 1, this.getY() + height + 1, 0.0D).color(color, color, color, 1.0f).endVertex();
-        bufferbuilder.vertex(this.getX() + width + 1, this.getY() + height + 1, 0.0D).color(color, color, color, 1.0f).endVertex();
-        bufferbuilder.vertex(this.getX() + width + 1, this.getY() - 1, 0.0D).color(color, color, color, 1.0f).endVertex();
-        bufferbuilder.vertex(this.getX() - 1, this.getY() - 1, 0.0D).color(color, color, color, 1.0f).endVertex();
+        bufferBuilder.addVertex(this.getX() - 1, this.getY() + height + 1, 0.0f).setColor(color, color, color, 1.0f);
+        bufferBuilder.addVertex(this.getX() + width + 1, this.getY() + height + 1, 0.0f).setColor(color, color, color, 1.0f);
+        bufferBuilder.addVertex(this.getX() + width + 1, this.getY() - 1, 0.0f).setColor(color, color, color, 1.0f);
+        bufferBuilder.addVertex(this.getX() - 1, this.getY() - 1, 0.0f).setColor(color, color, color, 1.0f);
 
         color = 1.0f;
-        bufferbuilder.vertex(this.getX() + (int) (this.value * (double) (this.width - 8)), this.getY() + height, 1.0D).color(color, color, color, 1.0f).endVertex();
-        bufferbuilder.vertex(this.getX() + (int) (this.value * (double) (this.width - 8)) + 8, this.getY() + height, 1.0D).color(color, color, color, 1.0f).endVertex();
-        bufferbuilder.vertex(this.getX() + (int) (this.value * (double) (this.width - 8)) + 8, this.getY(), 1.0D).color(color, color, color, 1.0f).endVertex();
-        bufferbuilder.vertex(this.getX() + (int) (this.value * (double) (this.width - 8)), this.getY(), 1.0D).color(color, color, color, 1.0f).endVertex();
-        BufferUploader.drawWithShader(bufferbuilder.end());
+        bufferBuilder.addVertex(this.getX() + (int)(this.value * (double)(this.width - 8)), this.getY() + height, 1.0f).setColor(color, color, color, 1.0f);
+        bufferBuilder.addVertex(this.getX() + (int)(this.value * (double)(this.width - 8)) + 8, this.getY() + height, 1.0f).setColor(color, color, color, 1.0f);
+        bufferBuilder.addVertex(this.getX() + (int)(this.value * (double)(this.width - 8)) + 8, this.getY(), 1.0f).setColor(color, color, color, 1.0f);
+        bufferBuilder.addVertex(this.getX() + (int)(this.value * (double)(this.width - 8)), this.getY(), 1.0f).setColor(color, color, color, 1.0f);
+
+        MeshData meshData = bufferBuilder.buildOrThrow();
+        BufferUploader.drawWithShader(meshData);
         RenderSystem.defaultBlendFunc();
         RenderSystem.disableBlend();
     }

@@ -62,7 +62,7 @@ public class ModLoader implements ModInitializer {
             CHUNK_CULLING_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), fromID("chunk_culling"), DefaultVertexFormat.POSITION);
             INSTANCED_ENTITY_CULLING_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), fromID("instanced_entity_culling"), DefaultVertexFormat.POSITION);
             COPY_DEPTH_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), fromID("copy_depth"), DefaultVertexFormat.POSITION);
-            REMOVE_COLOR_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), fromID("remove_color"), DefaultVertexFormat.POSITION_COLOR_TEX);
+            REMOVE_COLOR_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), fromID("remove_color"), DefaultVertexFormat.POSITION_TEX_COLOR);
             SHADER_ENABLED = false;
         } catch (IOException e) {
             throw new RuntimeException(e);
